@@ -269,7 +269,7 @@ static void module_assert_mutex_or_preempt(void)
 #endif
 }
 
-static bool sig_enforce = IS_ENABLED(CONFIG_MODULE_SIG_FORCE);
+bool sig_enforce = IS_ENABLED(CONFIG_MODULE_SIG_FORCE);
 #ifndef CONFIG_MODULE_SIG_FORCE
 module_param(sig_enforce, bool_enable_only, 0644);
 #endif /* !CONFIG_MODULE_SIG_FORCE */
