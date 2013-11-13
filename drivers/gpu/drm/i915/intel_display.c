@@ -13000,7 +13000,7 @@ check_crtc_state(struct drm_device *dev, struct drm_atomic_state *old_state)
 		sw_config = to_intel_crtc_state(crtc->state);
 		if (!intel_pipe_config_compare(dev, sw_config,
 					       pipe_config, false)) {
-			I915_STATE_WARN(1, "pipe state doesn't match!\n");
+			DRM_DEBUG_KMS("pipe state doesn't match!\n");
 			intel_dump_pipe_config(intel_crtc, pipe_config,
 					       "[hw state]");
 			intel_dump_pipe_config(intel_crtc, sw_config,
