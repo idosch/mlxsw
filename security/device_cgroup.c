@@ -608,6 +608,7 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 	int count, rc = 0;
 	struct dev_exception_item ex;
 	struct dev_cgroup *parent = css_to_devcgroup(devcgroup->css.parent);
+	int ret;
 
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
@@ -734,7 +735,11 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 			break;
 		}
 
-		if (!parent_has_perm(devcgroup, &ex))
+		rcu_read_lock();
+		ret = parent_has_perm(devcgroup, &ex);
+		rcu_read_unlock();
+
+		if (!ret)
 			return -EPERM;
 		rc = dev_exception_add(devcgroup, &ex);
 		break;
