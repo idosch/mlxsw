@@ -581,6 +581,7 @@ static int vrf_newlink(struct net *src_net, struct net_device *dev,
 {
 	struct net_vrf *vrf = netdev_priv(dev);
 	struct net_vrf_dev *vrf_ptr;
+	int err;
 
 	if (!data || !data[IFLA_VRF_TABLE])
 		return -EINVAL;
@@ -598,7 +599,10 @@ static int vrf_newlink(struct net *src_net, struct net_device *dev,
 
 	rcu_assign_pointer(dev->vrf_ptr, vrf_ptr);
 
-	return register_netdev(dev);
+	err = register_netdev(dev);
+	if (err)
+		kfree(vrf_ptr);
+	return err;
 }
 
 static size_t vrf_nl_getsize(const struct net_device *dev)
