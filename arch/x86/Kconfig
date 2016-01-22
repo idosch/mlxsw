@@ -320,7 +320,7 @@ source "kernel/Kconfig.freezer"
 menu "Processor type and features"
 
 config ZONE_DMA
-	bool "DMA memory allocation support" if EXPERT
+	bool "DMA memory allocation support"
 	default y
 	help
 	  DMA memory allocation support allows devices with less than 32-bit
