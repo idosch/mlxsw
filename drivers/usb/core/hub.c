@@ -5493,8 +5493,10 @@ done:
 	return 0;
 
 re_enumerate:
-	usb_release_bos_descriptor(udev);
-	udev->bos = bos;
+	if (udev->bos != bos) {
+		usb_release_bos_descriptor(udev);
+		udev->bos = bos;
+	}
 re_enumerate_no_bos:
 	/* LPM state doesn't matter when we're about to destroy the device. */
 	hub_port_logical_disconnect(parent_hub, port1);
