@@ -26,6 +26,7 @@ struct factors_data {
 	struct clk_factors_config *table;
 	void (*getter) (u32 *rate, u32 parent_rate, u8 *n, u8 *k, u8 *m, u8 *p);
 	const char *name;
+	int name_idx;
 };
 
 struct clk_factors {
