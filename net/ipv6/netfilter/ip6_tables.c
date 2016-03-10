@@ -474,6 +474,8 @@ mark_source_chains(const struct xt_table_info *newinfo,
 
 				/* Move along one */
 				size = e->next_offset;
+				if (pos + size > newinfo->size - sizeof(*e))
+					return 0;
 				e = (struct ip6t_entry *)
 					(entry0 + pos + size);
 				if (pos + size >= newinfo->size)
@@ -497,6 +499,10 @@ mark_source_chains(const struct xt_table_info *newinfo,
 					if (newpos >= newinfo->size)
 						return 0;
 				}
+
+				if (newpos > newinfo->size - sizeof(*e))
+					return 0;
+
 				e = (struct ip6t_entry *)
 					(entry0 + newpos);
 				e->counters.pcnt = pos;
