@@ -587,7 +587,7 @@ static void atom_set_pstate(struct cpudata *cpudata, int pstate)
 
 	val |= vid;
 
-	wrmsrl_on_cpu(cpudata->cpu, MSR_IA32_PERF_CTL, val);
+	wrmsrl(MSR_IA32_PERF_CTL, val);
 }
 
 static int silvermont_get_scaling(void)
