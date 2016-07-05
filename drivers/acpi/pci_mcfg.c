@@ -62,9 +62,12 @@ struct pci_ecam_ops *pci_mcfg_get_ops(struct acpi_pci_root *root)
                if ((f->domain == domain || f->domain == PCI_MCFG_DOMAIN_ANY) &&
                    (f->bus_num == bus_num || f->bus_num == PCI_MCFG_BUS_ANY) &&
                    (!strncmp(f->oem_id, mcfg_table->header.oem_id,
-                             ACPI_OEM_ID_SIZE)) &&
+                             min_t(size_t, strlen(f->oem_id),
+                                   ACPI_OEM_ID_SIZE))) &&
                    (!strncmp(f->oem_table_id, mcfg_table->header.oem_table_id,
-                             ACPI_OEM_TABLE_ID_SIZE)))
+                             min_t(size_t, strlen(f->oem_table_id),
+                                   ACPI_OEM_TABLE_ID_SIZE))) &&
+                   (f->oem_revision == mcfg_table->header.oem_revision))
                        return f->ops;
        }
        /* No quirks, use ECAM */
