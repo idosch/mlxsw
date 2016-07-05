@@ -77,6 +77,7 @@ struct pci_cfg_fixup {
        struct pci_ecam_ops *ops;
        char *oem_id;
        char *oem_table_id;
+       u32 oem_revision;
        int domain;
        int bus_num;
 };
@@ -85,12 +86,12 @@ struct pci_cfg_fixup {
 #define PCI_MCFG_BUS_ANY       -1
 
 /* Designate a routine to fix up buggy MCFG */
-#define DECLARE_ACPI_MCFG_FIXUP(ops, oem_id, oem_table_id, dom, bus)   \
+#define DECLARE_ACPI_MCFG_FIXUP(ops, oem_id, oem_table_id, rev, dom, bus) \
        static const struct pci_cfg_fixup                               \
-       __mcfg_fixup_##oem_id##oem_table_id##dom##bus                   \
+       __mcfg_fixup_##oem_id##oem_table_id##rev##dom##bus              \
        __used  __attribute__((__section__(".acpi_fixup_mcfg"),         \
                                aligned((sizeof(void *))))) =           \
-       { ops, oem_id, oem_table_id, dom, bus };
+       { ops, oem_id, oem_table_id, rev, dom, bus };
 
 extern int acpi_pci_probe_root_resources(struct acpi_pci_root_info *info);
 extern struct pci_bus *acpi_pci_root_create(struct acpi_pci_root *root,
