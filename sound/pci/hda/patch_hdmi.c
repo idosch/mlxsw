@@ -2379,7 +2379,7 @@ static int patch_i915_hsw_hdmi(struct hda_codec *codec)
 	/* For Haswell/Broadwell, the controller is also in the power well and
 	 * can cover the codec power request, and so need not set this flag.
 	 */
-	if (!is_haswell(codec) && !is_broadwell(codec))
+	if (!is_haswell(codec) && !is_broadwell(codec) && !is_skylake(codec))
 		codec->core.link_power_control = 1;
 
 	codec->patch_ops.set_power_state = haswell_set_power_state;
