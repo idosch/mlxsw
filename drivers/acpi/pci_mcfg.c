@@ -123,6 +123,38 @@ static struct mcfg_fixup mcfg_quirks[] = {
 	{ "CAVIUM", "THUNDERX", 2, 13, MCFG_BUS_ANY, &pci_thunder_ecam_ops,
 	  MCFG_RES_EMPTY},
 #endif
+#ifdef CONFIG_PCI_XGENE
+	{"APM   ", "XGENE   ", 1, 0, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 1, 1, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 1, 2, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 1, 3, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 1, 4, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 2, 0, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 2, 1, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 2, 2, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 2, 3, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 2, 4, MCFG_BUS_ANY,
+		&xgene_v1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 3, 0, MCFG_BUS_ANY,
+		&xgene_v2_1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 3, 1, MCFG_BUS_ANY,
+		&xgene_v2_1_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 4, 0, MCFG_BUS_ANY,
+		&xgene_v2_2_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 4, 1, MCFG_BUS_ANY,
+		&xgene_v2_2_pcie_ecam_ops, MCFG_RES_EMPTY},
+	{"APM   ", "XGENE   ", 4, 2, MCFG_BUS_ANY,
+		&xgene_v2_2_pcie_ecam_ops, MCFG_RES_EMPTY},
+#endif
 };
 
 static char mcfg_oem_id[ACPI_OEM_ID_SIZE];
