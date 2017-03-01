@@ -50,6 +50,8 @@ enum efi_secureboot_mode efi_get_secureboot(efi_system_table_t *sys_table_arg)
 	size = sizeof(secboot);
 	status = get_efi_var(efi_SecureBoot_name, &efi_variable_guid,
 			     NULL, &size, &secboot);
+	if (status == EFI_NOT_FOUND)
+		goto secure_boot_disabled;
 	if (status != EFI_SUCCESS)
 		goto out_efi_err;
 
@@ -96,7 +98,5 @@ secure_boot_disabled:
 
 out_efi_err:
 	pr_efi_err(sys_table_arg, "Could not determine UEFI Secure Boot status.\n");
-	if (status == EFI_NOT_FOUND)
-		goto secure_boot_disabled;
 	return efi_secureboot_mode_unknown;
 }
