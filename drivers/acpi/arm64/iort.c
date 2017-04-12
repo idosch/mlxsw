@@ -26,6 +26,8 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 
+#include <asm/cputype.h>
+
 #define IORT_TYPE_MASK(type)	(1 << (type))
 #define IORT_MSI_TYPE		(1 << ACPI_IORT_NODE_ITS_GROUP)
 #define IORT_IOMMU_TYPE		((1 << ACPI_IORT_NODE_SMMU) |	\
@@ -664,6 +666,14 @@ static int __init arm_smmu_v3_count_resources(struct acpi_iort_node *node)
 	return num_res;
 }
 
+static bool is_cavium_cn99xx_smmu_v3(void)
+{
+	u32 cpu_model = read_cpuid_id() & MIDR_CPU_MODEL_MASK;
+
+	return cpu_model == MIDR_CPU_MODEL(ARM_CPU_IMP_BRCM,
+					   BRCM_CPU_PART_VULCAN);
+}
+
 static void __init arm_smmu_v3_init_resources(struct resource *res,
 					      struct acpi_iort_node *node)
 {
@@ -678,7 +688,8 @@ static void __init arm_smmu_v3_init_resources(struct resource *res,
 	 * Override the size, for Cavium ThunderX2 implementation
 	 * which doesn't support the page 1 SMMU register space.
 	 */
-	if (smmu->model == ACPI_IORT_SMMU_CAVIUM_CN99XX)
+	if (smmu->model == ACPI_IORT_SMMU_CAVIUM_CN99XX ||
+	    is_cavium_cn99xx_smmu_v3())
 		size = SZ_64K;
 
 	res[num_res].start = smmu->base_address;
