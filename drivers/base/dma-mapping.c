@@ -342,6 +342,9 @@ int dma_configure(struct device *dev)
 	enum dev_dma_attr attr;
 	int ret = 0;
 
+	if (dev->skip_dma_configure)
+		return 0;
+
 	if (dev_is_pci(dev)) {
 		bridge = pci_get_host_bridge_device(to_pci_dev(dev));
 		dma_dev = bridge;
@@ -366,6 +369,9 @@ int dma_configure(struct device *dev)
 
 void dma_deconfigure(struct device *dev)
 {
+	if (dev->skip_dma_configure)
+		return;
+
 	of_dma_deconfigure(dev);
 	acpi_dma_deconfigure(dev);
 }
