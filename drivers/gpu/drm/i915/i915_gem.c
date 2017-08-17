@@ -355,6 +355,7 @@ i915_gem_object_wait_fence(struct dma_fence *fence,
 			   long timeout,
 			   struct intel_rps_client *rps)
 {
+	unsigned long irq_flags;
 	struct drm_i915_gem_request *rq;
 
 	BUILD_BUG_ON(I915_WAIT_INTERRUPTIBLE != 0x1);
@@ -410,9 +411,9 @@ out:
 		 * Compensate by giving the synchronous client credit for
 		 * a waitboost next time.
 		 */
-		spin_lock(&rq->i915->rps.client_lock);
+		spin_lock_irqsave(&rq->i915->rps.client_lock, irq_flags);
 		list_del_init(&rps->link);
-		spin_unlock(&rq->i915->rps.client_lock);
+		spin_unlock_irqrestore(&rq->i915->rps.client_lock, irq_flags);
 	}
 
 	return timeout;
@@ -5029,6 +5030,7 @@ void i915_gem_release(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_i915_file_private *file_priv = file->driver_priv;
 	struct drm_i915_gem_request *request;
+	unsigned long flags;
 
 	/* Clean up our request list when the client is going away, so that
 	 * later retire_requests won't dereference our soon-to-be-gone
@@ -5040,9 +5042,9 @@ void i915_gem_release(struct drm_device *dev, struct drm_file *file)
 	spin_unlock(&file_priv->mm.lock);
 
 	if (!list_empty(&file_priv->rps.link)) {
-		spin_lock(&to_i915(dev)->rps.client_lock);
+		spin_lock_irqsave(&to_i915(dev)->rps.client_lock, flags);
 		list_del(&file_priv->rps.link);
-		spin_unlock(&to_i915(dev)->rps.client_lock);
+		spin_unlock_irqrestore(&to_i915(dev)->rps.client_lock, flags);
 	}
 }
 
