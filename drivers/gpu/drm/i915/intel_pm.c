@@ -6108,6 +6108,7 @@ void gen6_rps_busy(struct drm_i915_private *dev_priv)
 
 void gen6_rps_idle(struct drm_i915_private *dev_priv)
 {
+	unsigned long flags;
 	/* Flush our bottom-half so that it does not race with us
 	 * setting the idle frequency and so that it is bounded by
 	 * our rpm wakeref. And then disable the interrupts to stop any
@@ -6127,16 +6128,17 @@ void gen6_rps_idle(struct drm_i915_private *dev_priv)
 	}
 	mutex_unlock(&dev_priv->rps.hw_lock);
 
-	spin_lock(&dev_priv->rps.client_lock);
+	spin_lock_irqsave(&dev_priv->rps.client_lock, flags);
 	while (!list_empty(&dev_priv->rps.clients))
 		list_del_init(dev_priv->rps.clients.next);
-	spin_unlock(&dev_priv->rps.client_lock);
+	spin_unlock_irqrestore(&dev_priv->rps.client_lock, flags);
 }
 
 void gen6_rps_boost(struct drm_i915_private *dev_priv,
 		    struct intel_rps_client *rps,
 		    unsigned long submitted)
 {
+	unsigned long flags;
 	/* This is intentionally racy! We peek at the state here, then
 	 * validate inside the RPS worker.
 	 */
@@ -6151,14 +6153,14 @@ void gen6_rps_boost(struct drm_i915_private *dev_priv,
 	if (rps && time_after(jiffies, submitted + DRM_I915_THROTTLE_JIFFIES))
 		rps = NULL;
 
-	spin_lock(&dev_priv->rps.client_lock);
+	spin_lock_irqsave(&dev_priv->rps.client_lock, flags);
 	if (rps == NULL || list_empty(&rps->link)) {
-		spin_lock_irq(&dev_priv->irq_lock);
+		spin_lock(&dev_priv->irq_lock);
 		if (dev_priv->rps.interrupts_enabled) {
 			dev_priv->rps.client_boost = true;
 			schedule_work(&dev_priv->rps.work);
 		}
-		spin_unlock_irq(&dev_priv->irq_lock);
+		spin_unlock(&dev_priv->irq_lock);
 
 		if (rps != NULL) {
 			list_add(&rps->link, &dev_priv->rps.clients);
@@ -6166,7 +6168,7 @@ void gen6_rps_boost(struct drm_i915_private *dev_priv,
 		} else
 			dev_priv->rps.boosts++;
 	}
-	spin_unlock(&dev_priv->rps.client_lock);
+	spin_unlock_irqrestore(&dev_priv->rps.client_lock, flags);
 }
 
 int intel_set_rps(struct drm_i915_private *dev_priv, u8 val)
