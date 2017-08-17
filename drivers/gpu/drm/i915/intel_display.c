@@ -13301,6 +13301,58 @@ static const struct drm_crtc_funcs intel_crtc_funcs = {
 	.set_crc_source = intel_crtc_set_crc_source,
 };
 
+struct wait_rps_boost {
+	struct wait_queue_entry wait;
+
+	struct drm_crtc *crtc;
+	struct drm_i915_gem_request *request;
+};
+
+static int do_rps_boost(struct wait_queue_entry *_wait,
+			unsigned mode, int sync, void *key)
+{
+	struct wait_rps_boost *wait = container_of(_wait, typeof(*wait), wait);
+	struct drm_i915_gem_request *rq = wait->request;
+
+	gen6_rps_boost(rq->i915, NULL, rq->emitted_jiffies);
+	i915_gem_request_put(rq);
+
+	drm_crtc_vblank_put(wait->crtc);
+
+	list_del(&wait->wait.entry);
+	kfree(wait);
+	return 1;
+}
+
+static void add_rps_boost_after_vblank(struct drm_crtc *crtc,
+				       struct dma_fence *fence)
+{
+	struct wait_rps_boost *wait;
+
+	if (!dma_fence_is_i915(fence))
+		return;
+
+	if (INTEL_GEN(to_i915(crtc->dev)) < 6)
+		return;
+
+	if (drm_crtc_vblank_get(crtc))
+		return;
+
+	wait = kmalloc(sizeof(*wait), GFP_KERNEL);
+	if (!wait) {
+		drm_crtc_vblank_put(crtc);
+		return;
+	}
+
+	wait->request = to_request(dma_fence_get(fence));
+	wait->crtc = crtc;
+
+	wait->wait.func = do_rps_boost;
+	wait->wait.flags = 0;
+
+	add_wait_queue(drm_crtc_vblank_waitqueue(crtc), &wait->wait);
+}
+
 /**
  * intel_prepare_plane_fb - Prepare fb for usage on plane
  * @plane: drm plane to prepare for
@@ -13392,6 +13444,8 @@ intel_prepare_plane_fb(struct drm_plane *plane,
 		return 0;
 
 	if (!new_state->fence) { /* implicit fencing */
+		struct dma_fence *fence;
+
 		ret = i915_sw_fence_await_reservation(&intel_state->commit_ready,
 						      obj->resv, NULL,
 						      false, I915_FENCE_TIMEOUT,
@@ -13399,7 +13453,16 @@ intel_prepare_plane_fb(struct drm_plane *plane,
 		if (ret < 0)
 			return ret;
 
+		fence = reservation_object_get_excl_rcu(obj->resv);
+		if (fence) {
+			add_rps_boost_after_vblank(new_state->crtc, fence);
+			dma_fence_put(fence);
+		}
+
 		i915_gem_object_wait_priority(obj, 0, I915_PRIORITY_DISPLAY);
+
+	} else {
+		add_rps_boost_after_vblank(new_state->crtc, new_state->fence);
 	}
 
 	return 0;
