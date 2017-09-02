@@ -46,6 +46,7 @@
 #define ITS_FLAGS_CMDQ_NEEDS_FLUSHING		(1ULL << 0)
 #define ITS_FLAGS_WORKAROUND_CAVIUM_22375	(1ULL << 1)
 #define ITS_FLAGS_WORKAROUND_CAVIUM_23144	(1ULL << 2)
+#define ITS_FLAGS_WORKAROUND_SOCIONEXT_PREITS	(1ULL << 3)
 
 #define RDIST_FLAGS_PROPBASE_NEEDS_FLUSHING	(1 << 0)
 
@@ -99,6 +100,10 @@ struct its_node {
 	struct its_collection	*collections;
 	struct list_head	its_device_list;
 	u64			flags;
+#ifdef CONFIG_SOCIONEXT_SYNQUACER_PREITS
+	u64			pre_its_base;
+	u64			pre_its_size;
+#endif
 	u32			ite_size;
 	u32			device_ids;
 	int			numa_node;
@@ -1106,13 +1111,29 @@ static void its_irq_compose_msi_msg(struct irq_data *d, struct msi_msg *msg)
 	u64 addr;
 
 	its = its_dev->its;
-	addr = its->phys_base + GITS_TRANSLATER;
+
+#ifdef CONFIG_SOCIONEXT_SYNQUACER_PREITS
+	if (its->flags & ITS_FLAGS_WORKAROUND_SOCIONEXT_PREITS)
+
+		/*
+		 * The Socionext Synquacer SoC has a so-called 'pre-ITS',
+		 * which maps 32-bit writes into a separate window of size
+		 * '4 << device_id_bits' onto writes to GITS_TRANSLATER with
+		 * device ID taken from bits [device_id_bits + 1:2] of the
+		 * window offset.
+		 */
+		addr = its->pre_its_base + (its_dev->device_id << 2);
+	else
+#endif
+		addr = its->phys_base + GITS_TRANSLATER;
 
 	msg->address_lo		= lower_32_bits(addr);
 	msg->address_hi		= upper_32_bits(addr);
 	msg->data		= its_get_event_id(d);
 
-	iommu_dma_map_msi_msg(d->irq, msg);
+	if (!IS_ENABLED(CONFIG_SOCIONEXT_SYNQUACER_PREITS) ||
+	    !(its->flags & ITS_FLAGS_WORKAROUND_SOCIONEXT_PREITS))
+		iommu_dma_map_msi_msg(d->irq, msg);
 }
 
 static int its_irq_set_irqchip_state(struct irq_data *d,
@@ -1684,6 +1705,11 @@ static int its_alloc_tables(struct its_node *its)
 		cache   = GITS_BASER_nCnB;
 		ids     = 0x14;                 /* 20 bits, 8MB */
 	}
+
+#ifdef CONFIG_SOCIONEXT_SYNQUACER_PREITS
+	if (its->flags & ITS_FLAGS_WORKAROUND_SOCIONEXT_PREITS)
+		ids = ilog2(its->pre_its_size) - 2;
+#endif
 
 	its->device_ids = ids;
 
@@ -2811,11 +2837,21 @@ static const struct gic_quirk its_quirks[] = {
 	}
 };
 
-static void its_enable_quirks(struct its_node *its)
+static void its_enable_quirks(struct its_node *its,
+			      struct fwnode_handle *handle)
 {
 	u32 iidr = readl_relaxed(its->base + GITS_IIDR);
 
 	gic_enable_quirks(iidr, its_quirks, its);
+
+#ifdef CONFIG_SOCIONEXT_SYNQUACER_PREITS
+	if (!fwnode_property_read_u64_array(handle,
+					"socionext,synquacer-pre-its",
+					&its->pre_its_base, 2)) {
+		its->flags |= ITS_FLAGS_WORKAROUND_SOCIONEXT_PREITS;
+		pr_info("ITS: enabling workaround for Socionext Synquacer pre-ITS\n");
+	}
+#endif
 }
 
 static int its_init_domain(struct fwnode_handle *handle, struct its_node *its)
@@ -2835,7 +2871,9 @@ static int its_init_domain(struct fwnode_handle *handle, struct its_node *its)
 
 	inner_domain->parent = its_parent;
 	irq_domain_update_bus_token(inner_domain, DOMAIN_BUS_NEXUS);
-	inner_domain->flags |= IRQ_DOMAIN_FLAG_MSI_REMAP;
+
+	if (!(its->flags & ITS_FLAGS_WORKAROUND_SOCIONEXT_PREITS))
+		inner_domain->flags |= IRQ_DOMAIN_FLAG_MSI_REMAP;
 	info->ops = &its_msi_domain_ops;
 	info->data = its;
 	inner_domain->host_data = info;
@@ -2989,7 +3027,7 @@ static int __init its_probe_one(struct resource *res,
 	}
 	its->cmd_write = its->cmd_base;
 
-	its_enable_quirks(its);
+	its_enable_quirks(its, handle);
 
 	err = its_alloc_tables(its);
 	if (err)
