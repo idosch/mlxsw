@@ -1056,8 +1056,8 @@ EXPORT_SYMBOL(keyring_restrict);
  * caller must also hold a lock on the keyring semaphore.
  *
  * Returns a pointer to the found key with usage count incremented if
- * successful and returns NULL if not found.  Revoked and invalidated keys are
- * skipped over.
+ * successful and returns NULL if not found.  Revoked, invalidated, and
+ * uninstantiated keys are skipped over.  (But negative keys are not!)
  *
  * If successful, the possession indicator is propagated from the keyring ref
  * to the returned key reference.
@@ -1084,8 +1084,10 @@ key_ref_t find_key_to_update(key_ref_t keyring_ref,
 
 found:
 	key = keyring_ptr_to_key(object);
-	if (key->flags & ((1 << KEY_FLAG_INVALIDATED) |
-			  (1 << KEY_FLAG_REVOKED))) {
+	if ((key->flags & ((1 << KEY_FLAG_INVALIDATED) |
+			   (1 << KEY_FLAG_REVOKED) |
+			   (1 << KEY_FLAG_INSTANTIATED))) !=
+	    (1 << KEY_FLAG_INSTANTIATED)) {
 		kleave(" = NULL [x]");
 		return NULL;
 	}
