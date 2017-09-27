@@ -1223,6 +1223,9 @@ long keyctl_reject_key(key_serial_t id, unsigned timeout, unsigned error,
 	    error == ERESTART_RESTARTBLOCK)
 		return -EINVAL;
 
+	BUILD_BUG_ON(MAX_ERRNO > (KEY_FLAGS_REJECT_ERROR_MASK >>
+				  KEY_FLAGS_REJECT_ERROR_SHIFT));
+
 	/* the appropriate instantiation authorisation key must have been
 	 * assumed before calling this */
 	ret = -EPERM;
