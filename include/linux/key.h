@@ -189,6 +189,17 @@ struct key {
 #define KEY_FLAG_KEEP		10	/* set if key should not be removed */
 #define KEY_FLAG_UID_KEYRING	11	/* set if key is a user or user session keyring */
 
+	/*
+	 * If the key is negatively instantiated, then bits 20-31 hold the error
+	 * code which should be returned when someone tries to use the key
+	 * (unless they allow negative keys).  The error code is stored as a
+	 * positive number, so it must be negated before being returned.
+	 *
+	 * Note that a key can go from negative to positive but not vice versa.
+	 */
+#define KEY_FLAGS_REJECT_ERROR_SHIFT	20
+#define KEY_FLAGS_REJECT_ERROR_MASK	0xFFF00000
+
 	/* the key type and key description string
 	 * - the desc is used to match a key against search criteria
 	 * - it should be a printable string
@@ -213,7 +224,6 @@ struct key {
 			struct list_head name_link;
 			struct assoc_array keys;
 		};
-		int reject_error;
 	};
 
 	/* This is set on a keyring to restrict the addition of a link to a key
