@@ -5368,6 +5368,7 @@ mlxsw_sp_rif_create(struct mlxsw_sp *mlxsw_sp,
 	vr = mlxsw_sp_vr_get(mlxsw_sp, tb_id ? : RT_TABLE_MAIN);
 	if (IS_ERR(vr))
 		return ERR_CAST(vr);
+	vr->rif_count++;
 
 	err = mlxsw_sp_rif_index_alloc(mlxsw_sp, &rif_index);
 	if (err)
@@ -5403,7 +5404,6 @@ mlxsw_sp_rif_create(struct mlxsw_sp *mlxsw_sp,
 
 	mlxsw_sp_rif_counters_alloc(rif);
 	mlxsw_sp->router->rifs[rif_index] = rif;
-	vr->rif_count++;
 
 	return rif;
 
@@ -5416,6 +5416,7 @@ err_fid_get:
 	kfree(rif);
 err_rif_alloc:
 err_rif_index_alloc:
+	vr->rif_count--;
 	mlxsw_sp_vr_put(vr);
 	return ERR_PTR(err);
 }
@@ -5430,7 +5431,6 @@ void mlxsw_sp_rif_destroy(struct mlxsw_sp_rif *rif)
 	mlxsw_sp_router_rif_gone_sync(mlxsw_sp, rif);
 	vr = &mlxsw_sp->router->vrs[rif->vr_id];
 
-	vr->rif_count--;
 	mlxsw_sp->router->rifs[rif->rif_index] = NULL;
 	mlxsw_sp_rif_counters_free(rif);
 	mlxsw_sp_mr_rif_del(vr->mr4_table, rif);
@@ -5439,6 +5439,7 @@ void mlxsw_sp_rif_destroy(struct mlxsw_sp_rif *rif)
 		/* Loopback RIFs are not associated with a FID. */
 		mlxsw_sp_fid_put(fid);
 	kfree(rif);
+	vr->rif_count--;
 	mlxsw_sp_vr_put(vr);
 }
 
