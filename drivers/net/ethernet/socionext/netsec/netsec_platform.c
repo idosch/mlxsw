@@ -14,21 +14,22 @@
  */
 
 #include <linux/acpi.h>
-#include <linux/device.h>
-#include <linux/ctype.h>
-#include <linux/netdevice.h>
-#include <linux/types.h>
 #include <linux/bitops.h>
-#include <linux/dma-mapping.h>
-#include <linux/module.h>
-#include <linux/sizes.h>
-#include <linux/platform_device.h>
 #include <linux/clk.h>
+#include <linux/ctype.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/io.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/of_net.h>
-#include <linux/io.h>
+#include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
+#include <linux/sizes.h>
+#include <linux/types.h>
 
 #include "netsec.h"
 
