@@ -45,6 +45,17 @@
 / {
 	model = "FriendlyArm NanoPi M1 Plus";
 	compatible = "friendlyarm,nanopi-m1-plus", "allwinner,sun8i-h3";
+
+        reg_gmac_3v3: gmac-3v3 {
+                compatible = "regulator-fixed";
+                regulator-name = "gmac-3v3";
+                regulator-min-microvolt = <3300000>;
+                regulator-max-microvolt = <3300000>;
+                startup-delay-us = <100000>;
+                enable-active-high;
+                gpio = <&pio 3 6 GPIO_ACTIVE_HIGH>;
+        };
+
 };
 
 &ehci1 {
