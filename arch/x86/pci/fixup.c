@@ -702,7 +702,7 @@ static void pci_amd_enable_64bit_bar(struct pci_dev *dev)
 	res->name = "PCI Bus 0000:00";
 	res->flags = IORESOURCE_PREFETCH | IORESOURCE_MEM |
 		IORESOURCE_MEM_64 | IORESOURCE_WINDOW;
-	res->start = 0x100000000ull;
+	res->start = 0xbd00000000ull;
 	res->end = 0xfd00000000ull - 1;
 
 	/* Just grab the free area behind system memory for this */
