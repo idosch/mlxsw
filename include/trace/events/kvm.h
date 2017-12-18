@@ -227,7 +227,8 @@ TRACE_EVENT(kvm_mmio,
 		__entry->gpa		= gpa;
 		__entry->val = 0;
 		if (val)
-			memcpy(&__entry->val, val, min(8, len));
+			memcpy(&__entry->val, val,
+			       min_t(u32, sizeof(__entry->val), len));
 	),
 
 	TP_printk("mmio %s len %u gpa 0x%llx val 0x%llx",
