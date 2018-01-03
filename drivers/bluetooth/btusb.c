@@ -3122,8 +3122,15 @@ static int btusb_probe(struct usb_interface *intf,
 		/* QCA Rome devices lose their updated firmware over suspend,
 		 * but the USB hub doesn't notice any status change.
 		 * Explicitly request a device reset on resume.
+		 * And disable runtime pm by getting a pm reference, the USB
+		 * core will drop our reference on disconnect.
 		 */
 		set_bit(BTUSB_RESET_RESUME, &data->flags);
+		err = usb_autopm_get_interface(data->intf);
+		if (err < 0) {
+			BT_ERR("failed to get pm reference %d", err);
+			goto out_free_dev;
+		}
 	}
 
 #ifdef CONFIG_BT_HCIBTUSB_RTL
