@@ -5364,9 +5364,14 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 			 * is not. move_freepages_block() can shift ahead of
 			 * the valid region but still depends on correct page
 			 * metadata.
+			 * Also make sure we never step back.
 			 */
-			pfn = (memblock_next_valid_pfn(pfn, end_pfn) &
+			unsigned long next_pfn;
+
+			next_pfn = (memblock_next_valid_pfn(pfn, end_pfn) &
 					~(pageblock_nr_pages-1)) - 1;
+			if (next_pfn > pfn)
+				pfn = next_pfn;
 #endif
 			continue;
 		}
